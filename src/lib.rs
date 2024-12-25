@@ -9,24 +9,46 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     let cnt = concatenate(&content);
     println!("{}", cnt);
+
+    match config.search {
+        Some(x) => println!("{}", x),
+        None => println!("No value passed to search"),
+    }
     Ok(())
 }
 
 fn concatenate(content: &str) -> &str {
     content
 }
+
 pub struct Config {
     pub filename: String,
+    pub search: Option<String>,
 }
 
 impl Config {
-    pub fn new(args: std::env::Args) -> Result<Config, &'static str> {
-        let filename = match args.skip(1).next() {
-            Some(filename) => filename,
-            None => return Err("couldn't parse filename"),
+    pub fn new(mut args: std::env::Args) -> Result<Config, &'static str> {
+        args.next();
+
+        let filename = match args.next() {
+            Some(arg) => arg,
+            None => return Err("filename not provided"),
         };
 
-        Ok(Config { filename })
+        let mut search = None;
+        while let Some(arg) = args.next() {
+            match arg.as_str() {
+                "-s" => {
+                    search = match args.next() {
+                        Some(val) => Some(val),
+                        None => return Err("search string not provided after -s flag"),
+                    }
+                }
+                _ => return Err("invalid argument provided"),
+            }
+        }
+
+        Ok(Config { filename, search })
     }
 }
 
